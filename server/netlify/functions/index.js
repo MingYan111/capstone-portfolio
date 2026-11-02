@@ -47,6 +47,20 @@ exports.handler = async (event, context) => {
       tcpTest(h1, 27017),
       tcpTest(h1, 443),
     ]);
+
+    let connect = 'SKIPPED(already=' + mongoose.connection.readyState + ')';
+    if (mongoose.connection.readyState === 0 && process.env.MONGODB_URI) {
+      try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+          serverSelectionTimeoutMS: 7000,
+          connectTimeoutMS: 7000,
+        });
+        connect = 'OK state=' + mongoose.connection.readyState;
+      } catch (e) {
+        connect = 'ERR: ' + e.message + (e.reason ? ' | reason: ' + JSON.stringify(e.reason) : '');
+      }
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -61,6 +75,7 @@ exports.handler = async (event, context) => {
           'shard01:27017': tcp[2],
           'shard01:443': tcp[3],
         },
+        connect_test: connect,
       }),
     };
   }
