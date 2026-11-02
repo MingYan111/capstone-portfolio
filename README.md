@@ -36,12 +36,12 @@ A modern **Single Page Application (SPA) built with React**. It consumes all of 
 
 ## 2. Live Deployment Links
 
-> ⚠️ Replace the placeholders below with the real URLs after deploying.
-
 | Component | Link |
 |---|---|
-| Front-End (e.g., Vercel / Netlify) | `https://your-portfolio.vercel.app` |
-| Back-End API (e.g., Render / Heroku) | `https://your-api.onrender.com` |
+| Front-End (React SPA) | `https://gregarious-sprite-94a8c9.netlify.app` |
+| Back-End API (Node.js/Express) | `https://dreamy-halva-73e31c.netlify.app` |
+
+> Admin login (live): email `admin@example.com`, password `admin123456`
 
 ---
 
@@ -61,11 +61,19 @@ A modern **Single Page Application (SPA) built with React**. It consumes all of 
 ```
 CapstoneProject/
 ├── README.md
+├── package.json                # Root helper: npm start -> node server/server.js
 ├── server/                     # Back-End API
-│   ├── server.js               # Express app entry point
+│   ├── server.js               # Local entry point (connect + listen)
+│   ├── app.js                  # Express app (routes, CORS, error handling)
 │   ├── seed.js                 # Seed script (admin + demo content)
 │   ├── package.json
 │   ├── .env.example            # Environment variable template
+│   ├── netlify.toml            # Netlify function + redirect config
+│   ├── netlify/
+│   │   └── functions/
+│   │       └── index.js        # serverless-http wrapper (waits for DB)
+│   ├── api/index.js            # Optional Vercel serverless adapter (reference only)
+│   ├── vercel.json             # Optional Vercel config (reference only)
 │   ├── config/
 │   │   └── db.js               # MongoDB connection
 │   ├── middleware/
@@ -104,7 +112,8 @@ CapstoneProject/
 
 ## 5. API Documentation
 
-Base URL (local): `http://localhost:5000` — all routes are prefixed with `/api`.
+Base URL (local): `http://localhost:5000` — all routes are prefixed with `/api`.  
+Base URL (live): `https://dreamy-halva-73e31c.netlify.app`
 
 ### 5.1 Authentication
 
@@ -232,24 +241,43 @@ Log in at `http://localhost:5173/login`, then open **Admin** in the navigation b
 ### 7.1 Deploy the Database (MongoDB Atlas)
 
 1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
-2. Create a database user and add your IP to the network access whitelist.
+2. Create a database user and add your IP (or `0.0.0.0/0`) to the network access whitelist.
 3. Copy the connection string and put it into `MONGODB_URI`.
 
-### 7.2 Deploy the Back-End (Render / Heroku)
+### 7.2 Deploy the Back-End (Netlify Functions)
 
-1. Create a new **Web Service** from the `server` folder.
-2. Set the environment variables (`PORT`, `MONGODB_URI`, `JWT_SECRET`, `ADMIN_*`, `CLIENT_URL`).
-3. Build command: `npm install` — Start command: `npm start`.
-4. After deployment, run `npm run seed` (one-off job) to create the admin account.
+The back-end runs as a Netlify Function via the `serverless-http` wrapper (see `server/netlify.toml` and `server/netlify/functions/index.js`).
 
-### 7.3 Deploy the Front-End (Vercel / Netlify)
+1. Push the repository to GitHub.
+2. On Netlify choose **Add new site → Import an existing project → GitHub**, and select the repository.
+3. Set **Base directory** to `server`. Build and publish directories are not used — requests are routed to the function by the redirect rule in `netlify.toml`.
+4. In **Environment variables**, add every variable from `server/.env.example` (`MONGODB_URI`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CLIENT_URL`).
+   - Use the **direct (non-SRV) connection string** for `MONGODB_URI` (port 27017, `tls=true`), e.g.
+     `mongodb://<user>:<pass>@ac-xxx-shard-00-00.<cluster>.mongodb.net:27017,ac-xxx-shard-00-01.<cluster>.mongodb.net:27017,ac-xxx-shard-00-02.<cluster>.mongodb.net:27017/portfolio?replicaSet=atlas-xxxx-shard-0&retryWrites=true&authSource=admin&tls=true`
+5. Deploy the site, then open **Project configuration → Visitor access → Edit visibility** and set **Production** to **Public** so anyone can access the API.
+6. The function waits for the MongoDB connection before serving requests, so cold starts are handled correctly. When the front-end URL changes, update `CLIENT_URL` (comma-separated for multiple origins) and trigger a new deploy.
 
-1. In the `client` folder create a `.env` file (or set it in the platform dashboard):
-   ```env
-   VITE_API_URL=https://your-api.onrender.com
+### 7.3 Deploy the Front-End (Netlify)
+
+Option A — Git import (auto build):
+
+1. **Add new site → Import an existing project → GitHub** and select the same repository.
+2. Set **Base directory** to `client`, **Build command** to `npm run build`, **Publish directory** to `dist`.
+3. Add the environment variable `VITE_API_URL` = your back-end URL (e.g. `https://dreamy-halva-73e31c.netlify.app`).
+4. Deploy, then set the site visibility to **Public** (Project configuration → Visitor access).
+
+Option B — Netlify Drop (manual upload, what this project used):
+
+1. Build locally with the back-end URL injected:
+   ```bash
+   cd client
+   npm install
+   VITE_API_URL=https://dreamy-halva-73e31c.netlify.app npm run build
    ```
-2. Build command: `npm install && npm run build` — Output directory: `dist`.
-3. After deployment, update `CLIENT_URL` on the back-end to the front-end URL and **restart the back-end service**.
+2. Drag and drop the generated `client/dist` folder onto the Netlify dashboard.
+3. Set the site visibility to **Public**.
+
+After deployment, make sure the back-end `CLIENT_URL` includes the front-end URL (otherwise the browser will be blocked by CORS), then trigger a new back-end deploy.
 
 ---
 
