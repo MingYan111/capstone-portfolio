@@ -19,4 +19,22 @@ if (process.env.MONGODB_URI) {
     });
 }
 
-exports.handler = serverless(app);
+const handler = serverless(app);
+
+exports.handler = async (event, context) => {
+  // TEMPORARY diagnostic endpoint - removed after diagnosis
+  if (event.path === '/__diag' || (event.queryStringParameters && event.queryStringParameters.diag === '1')) {
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mongo_uri_set: !!process.env.MONGODB_URI,
+        admin_email_set: !!process.env.ADMIN_EMAIL,
+        jwt_set: !!process.env.JWT_SECRET,
+        node_version: process.version,
+        mongoose_state: mongoose.connection.readyState,
+      }),
+    };
+  }
+  return handler(event, context);
+};
