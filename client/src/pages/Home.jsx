@@ -40,7 +40,7 @@ export default function Home() {
       <section className="hero">
         <div className="container">
           <h1>
-            Hi, I&apos;m <span className="accent">Dong Mingyan</span>
+            Hi, I&apos;m <span className="accent">weizhihao</span>
           </h1>
           <p>
             A full-stack developer crafting modern web applications with React, Node.js, Express

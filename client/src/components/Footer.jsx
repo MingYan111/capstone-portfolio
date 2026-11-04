@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="container">
         <p>
-          &copy; {new Date().getFullYear()} Dong Mingyan — Full-Stack Portfolio &amp; Blog. Built
+          &copy; {new Date().getFullYear()} weizhihao — Full-Stack Portfolio &amp; Blog. Built
           with React, Node.js, Express &amp; MongoDB.
         </p>
       </div>

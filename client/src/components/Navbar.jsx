@@ -16,7 +16,7 @@ export default function Navbar() {
     <header className="navbar">
       <div className="container navbar-inner">
         <Link to="/" className="navbar-brand">
-          My<span>Portfolio</span>
+          weizhihao
         </Link>
         <nav className="navbar-links">
           <NavLink to="/" end className={navLinkClass}>
